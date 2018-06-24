@@ -152,10 +152,25 @@
         в дереве библиотеки: 1.2.643.2.52.1.13.1 - параметры 256 битных кривых
         в дереве библиотеки: 1.2.643.2.52.1.13.2 - параметры 512 битных кривых */
 
-
+        /* 14. идентификаторы алгоритмов бесключевого хеширования SHA3,
+         * значения OID взяты из http://oid-info.com/get/2.16.840.1.101.3.4.2
+       */
+   { hash_function, algorithm, "sha3_224", "2.16.840.1.101.3.4.2.7", NULL,
+     (ak_function_void *) ak_hash_create_sha3_224 },
+   { hash_function, algorithm, "sha3_256", "2.16.840.1.101.3.4.2.8", NULL,
+     (ak_function_void *) ak_hash_create_sha3_256 },
+   { hash_function, algorithm, "sha3_384", "2.16.840.1.101.3.4.2.9", NULL,
+     (ak_function_void *) ak_hash_create_sha3_384 },
+   { hash_function, algorithm, "sha3_512", "2.16.840.1.101.3.4.2.10", NULL,
+     (ak_function_void *) ak_hash_create_sha3_512 },
+   { hash_function, algorithm, "shake128", "2.16.840.1.101.3.4.2.11", NULL,
+     (ak_function_void *) ak_hash_create_shake128 },
+   { hash_function, algorithm, "shake256", "2.16.840.1.101.3.4.2.12", NULL,
+     (ak_function_void *) ak_hash_create_shake256 },
   /* завершающая константа, должна всегда принимать неопределенные и нулевые значения */
    { undefined_engine, undefined_mode, NULL, NULL, NULL, NULL }
- };
+
+};
 
 /* ----------------------------------------------------------------------------------------------- */
 /*                     реализация функций доступа к глобальному списку OID                         */

@@ -71,6 +71,7 @@ set( SOURCES        source/ak_log.c
                     source/ak_mpzn.c
                     source/ak_curves.c
                     source/ak_sign.c
+                    source/ak_hash-sha-3.c
 )
 
 set( DOCS           doc/libakrypt.dox
@@ -174,6 +175,7 @@ set( EXAMPLES_LIST hello
                    oid
                    hash
                    hash-oids
+                   hash-sha-3
 )
 
 # организуем сборку примеров со статической линковкой

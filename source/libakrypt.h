@@ -469,6 +469,18 @@
  dll_export ak_handle ak_hash_new_gosthash94( ak_handle );
 /*! \brief Создание дескриптора функции хеширования ГОСТ Р 34.11-94 с таблицами замен из CSP. */
  dll_export ak_handle ak_hash_new_gosthash94_csp( void );
+/*! \brief Создание дескриптора функции хеширования SHA3-224. */
+dll_export ak_handle ak_hash_new_sha3_224( void );
+/*! \brief Создание дескриптора функции хеширования SHA3-256. */
+dll_export ak_handle ak_hash_new_sha3_256( void );
+/*! \brief Создание дескриптора функции хеширования SHA3-384. */
+dll_export ak_handle ak_hash_new_sha3_384( void );
+/*! \brief Создание дескриптора функции хеширования SHA3-512. */
+dll_export ak_handle ak_hash_new_sha3_512( void );
+/*! \brief Создание дескриптора функции хеширования SHAKE128. */
+dll_export ak_handle ak_hash_new_shake128( void );
+/*! \brief Создание дескриптора функции хеширования SHAKE256. */
+dll_export ak_handle ak_hash_new_shake256( void );
 /*! \brief Создание дескриптора функции хеширования по ее OID. */
  dll_export ak_handle ak_hash_new_oid( ak_handle );
 /*! \brief Получение длины хешкода для заданной функции хеширования (в байтах). */

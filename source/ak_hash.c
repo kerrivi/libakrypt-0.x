@@ -29,6 +29,7 @@
  #include <ak_compress.h>
  #include <ak_context_manager.h>
 
+
 /* ----------------------------------------------------------------------------------------------- */
 /*! Функция устанавливает значение полей структуры struct hash в значения по-умолчанию.
 
@@ -44,7 +45,8 @@
                                                              "using null pointer to hash context" );
   if( block_size == 0 ) return ak_error_message( ak_error_zero_length, __func__ ,
                                                        "using a zero length of data block length" );
-  if( data_size != 0 ) {
+  if( data_size != 0 )
+  {
     if(( ctx->data = malloc( data_size )) == NULL )
       return ak_error_message( ak_error_out_of_memory, __func__ ,
                                                       "incorrect internal data memory allocation" );
@@ -350,6 +352,186 @@
 
  /* помещаем в стуктуру управления контекстами */
  return ak_libakrypt_new_handle( ctx, hash_function, "", ak_hash_delete );
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/*! Функция создает контекст алгоритма хеширования SHA3-224 с длиной хэш-кода равной 224 бит
+    и возвращает пользователю дескриптор созданного контекста.
+
+    @return Функция возвращает десткриптор созданного контекста. В случае возникновения ошибки
+    возвращается \ref ak_error_wrong_handle. Код ошибки может быть получен с помощью вызова
+    функции ak_error_get_value().                                                           */
+/* ----------------------------------------------------------------------------------------------- */
+ak_handle ak_hash_new_sha3_224( void )
+{
+    ak_hash ctx = NULL;
+    int error = ak_error_ok;
+
+    /* создаем контекст функции хэширования */
+    if(( ctx = malloc( sizeof( struct hash ))) == NULL ) {
+        ak_error_message( ak_error_out_of_memory, __func__ , "wrong creation of hash function context" );
+        return ak_error_wrong_handle;
+    }
+
+    /* инициализируем его */
+    if(( error = ak_hash_create_sha3_224( ctx )) != ak_error_ok ) {
+        ak_error_message( error, __func__ , "wrong initialization of hash function context" );
+        free( ctx );
+        return ak_error_wrong_handle;
+    }
+
+    /* помещаем в стуктуру управления контекстами */
+    return ak_libakrypt_new_handle( ctx, hash_function, "", ak_hash_delete );
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/*! Функция создает контекст алгоритма хеширования SHA3-256 с длиной хэш-кода равной 256 бит
+    и возвращает пользователю дескриптор созданного контекста.
+
+    @return Функция возвращает десткриптор созданного контекста. В случае возникновения ошибки
+    возвращается \ref ak_error_wrong_handle. Код ошибки может быть получен с помощью вызова
+    функции ak_error_get_value().                                                           */
+/* ----------------------------------------------------------------------------------------------- */
+ak_handle ak_hash_new_sha3_256( void )
+{
+    ak_hash ctx = NULL;
+    int error = ak_error_ok;
+
+    /* создаем контекст функции хэширования */
+    if(( ctx = malloc( sizeof( struct hash ))) == NULL ) {
+        ak_error_message( ak_error_out_of_memory, __func__ , "wrong creation of hash function context" );
+        return ak_error_wrong_handle;
+    }
+
+    /* инициализируем его */
+    if(( error = ak_hash_create_sha3_256( ctx )) != ak_error_ok ) {
+        ak_error_message( error, __func__ , "wrong initialization of hash function context" );
+        free( ctx );
+        return ak_error_wrong_handle;
+    }
+
+    /* помещаем в стуктуру управления контекстами */
+    return ak_libakrypt_new_handle( ctx, hash_function, "", ak_hash_delete );
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/*! Функция создает контекст алгоритма хеширования SHA3-384 с длиной хэш-кода равной 384 бит
+    и возвращает пользователю дескриптор созданного контекста.
+
+    @return Функция возвращает десткриптор созданного контекста. В случае возникновения ошибки
+    возвращается \ref ak_error_wrong_handle. Код ошибки может быть получен с помощью вызова
+    функции ak_error_get_value().                                                           */
+/* ----------------------------------------------------------------------------------------------- */
+ak_handle ak_hash_new_sha3_384( void )
+{
+    ak_hash ctx = NULL;
+    int error = ak_error_ok;
+
+    /* создаем контекст функции хэширования */
+    if(( ctx = malloc( sizeof( struct hash ))) == NULL ) {
+        ak_error_message( ak_error_out_of_memory, __func__ , "wrong creation of hash function context" );
+        return ak_error_wrong_handle;
+    }
+
+    /* инициализируем его */
+    if(( error = ak_hash_create_sha3_384( ctx )) != ak_error_ok ) {
+        ak_error_message( error, __func__ , "wrong initialization of hash function context" );
+        free( ctx );
+        return ak_error_wrong_handle;
+    }
+
+    /* помещаем в стуктуру управления контекстами */
+    return ak_libakrypt_new_handle( ctx, hash_function, "", ak_hash_delete );
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/*! Функция создает контекст алгоритма хеширования SHA3-512 с длиной хэш-кода равной 512 бит
+    и возвращает пользователю дескриптор созданного контекста.
+
+    @return Функция возвращает десткриптор созданного контекста. В случае возникновения ошибки
+    возвращается \ref ak_error_wrong_handle. Код ошибки может быть получен с помощью вызова
+    функции ak_error_get_value().                                                           */
+/* ----------------------------------------------------------------------------------------------- */
+ak_handle ak_hash_new_sha3_512( void )
+{
+    ak_hash ctx = NULL;
+    int error = ak_error_ok;
+
+    /* создаем контекст функции хэширования */
+    if(( ctx = malloc( sizeof( struct hash ))) == NULL ) {
+        ak_error_message( ak_error_out_of_memory, __func__ , "wrong creation of hash function context" );
+        return ak_error_wrong_handle;
+    }
+
+    /* инициализируем его */
+    if(( error = ak_hash_create_sha3_512( ctx )) != ak_error_ok ) {
+        ak_error_message( error, __func__ , "wrong initialization of hash function context" );
+        free( ctx );
+        return ak_error_wrong_handle;
+    }
+
+    /* помещаем в стуктуру управления контекстами */
+    return ak_libakrypt_new_handle( ctx, hash_function, "", ak_hash_delete );
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/*! Функция создает контекст алгоритма хеширования SHAKE128 с длиной хэш-кода равной 256 бит
+    и возвращает пользователю дескриптор созданного контекста.
+
+    @return Функция возвращает десткриптор созданного контекста. В случае возникновения ошибки
+    возвращается \ref ak_error_wrong_handle. Код ошибки может быть получен с помощью вызова
+    функции ak_error_get_value().                                                           */
+/* ----------------------------------------------------------------------------------------------- */
+ak_handle ak_hash_new_shake128( void )
+{
+    ak_hash ctx = NULL;
+    int error = ak_error_ok;
+
+    /* создаем контекст функции хэширования */
+    if(( ctx = malloc( sizeof( struct hash ))) == NULL ) {
+        ak_error_message( ak_error_out_of_memory, __func__ , "wrong creation of hash function context" );
+        return ak_error_wrong_handle;
+    }
+
+    /* инициализируем его */
+    if(( error = ak_hash_create_shake128( ctx )) != ak_error_ok ) {
+        ak_error_message( error, __func__ , "wrong initialization of hash function context" );
+        free( ctx );
+        return ak_error_wrong_handle;
+    }
+
+    /* помещаем в стуктуру управления контекстами */
+    return ak_libakrypt_new_handle( ctx, hash_function, "", ak_hash_delete );
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/*! Функция создает контекст алгоритма хеширования SHAKE256 с длиной хэш-кода равной 512 бит
+    и возвращает пользователю дескриптор созданного контекста.
+
+    @return Функция возвращает десткриптор созданного контекста. В случае возникновения ошибки
+    возвращается \ref ak_error_wrong_handle. Код ошибки может быть получен с помощью вызова
+    функции ak_error_get_value().                                                           */
+/* ----------------------------------------------------------------------------------------------- */
+ak_handle ak_hash_new_shake256( void )
+{
+    ak_hash ctx = NULL;
+    int error = ak_error_ok;
+
+    /* создаем контекст функции хэширования */
+    if(( ctx = malloc( sizeof( struct hash ))) == NULL ) {
+        ak_error_message( ak_error_out_of_memory, __func__ , "wrong creation of hash function context" );
+        return ak_error_wrong_handle;
+    }
+
+    /* инициализируем его */
+    if(( error = ak_hash_create_shake256( ctx )) != ak_error_ok ) {
+        ak_error_message( error, __func__ , "wrong initialization of hash function context" );
+        free( ctx );
+        return ak_error_wrong_handle;
+    }
+
+    /* помещаем в стуктуру управления контекстами */
+    return ak_libakrypt_new_handle( ctx, hash_function, "", ak_hash_delete );
 }
 
 /* ----------------------------------------------------------------------------------------------- */
