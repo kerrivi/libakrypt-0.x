@@ -12,7 +12,7 @@ int main( void )
 
     /* определяем данные для хэширования */
     ak_uint8 data[44] = "The quick brown fox jumps over the lazy dog";
-
+   // ak_uint8 data2[113] ="abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
 
     /* буффер для хранения результата */
     ak_buffer buffer = NULL;

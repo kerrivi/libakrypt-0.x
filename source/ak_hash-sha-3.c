@@ -6,16 +6,13 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 /*! \brief Структура для хранения внутренних данных контекста функции хеширования SHA3             */
-struct sha3_struct
-{
+
     /*текущий хеш*/
-    union
+    union sha3_struct
     {
         ak_uint8 b[200];
         ak_uint64 q[25];
-    } H;
-    ak_int32 pt;
-};
+    };
 
 /* ----------------------------------------------------------------------------------------------- */
 /*! \brief Функция, реализующая циклическое смещение                                               */
@@ -28,7 +25,7 @@ static ak_uint64 ROT64(ak_uint64 x, ak_uint64 y)
 /* ----------------------------------------------------------------------------------------------- */
 /*! \brief Функция раундовых перестановок (θ,ρ,π,χ,ι)                                           */
 /* ----------------------------------------------------------------------------------------------- */
-static inline void keccak_permut(ak_uint64 st[25])
+static inline void keccak_permut(ak_uint64 state[25])
 {
 
 
@@ -39,22 +36,22 @@ static inline void keccak_permut(ak_uint64 st[25])
     {
         /* θ */
         for (i = 0; i < 5; i++)
-            bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
+            bc[i] = state[i] ^ state[i + 5] ^ state[i + 10] ^ state[i + 15] ^ state[i + 20];
 
         for (i = 0; i < 5; i++)
         {
             t = bc[(i + 4) % 5] ^ ROT64(bc[(i + 1) % 5], 1);
             for (j = 0; j < 25; j += 5)
-                st[j + i] ^= t;
+                state[j + i] ^= t;
         }
 
         /* ρ и π*/
-        t = st[1];
+        t = state[1];
         for (i = 0; i < 24; i++)
         {
-            j = keccakf_pi[i];
-            bc[0] = st[j];
-            st[j] = ROT64(t, keccakf_ro[i]);
+            j = keccak_pi[i];
+            bc[0] = state[j];
+            state[j] = ROT64(t, keccak_ro[i]);
             t = bc[0];
         }
 
@@ -62,13 +59,13 @@ static inline void keccak_permut(ak_uint64 st[25])
         for (j = 0; j < 25; j += 5)
         {
             for (i = 0; i < 5; i++)
-                bc[i] = st[j + i];
+                bc[i] = state[j + i];
             for (i = 0; i < 5; i++)
-                st[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
+                state[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
         }
 
         /* ι */
-        st[0] ^= keccakf_rc[r];
+        state[0] ^= keccakf_rc[r];
     }
 
 
@@ -82,18 +79,17 @@ static inline void keccak_permut(ak_uint64 st[25])
 static int ak_hash_sha3_clean( ak_pointer ctx )
 {
 
-    struct sha3_struct *sx = NULL;
+    union  sha3_struct *sx = NULL;
     if( ctx == NULL ) return ak_error_message( ak_error_null_pointer,
                                                __func__ , "using null pointer to a context" );
-    sx = ( struct sha3_struct * ) ((( ak_hash ) ctx ))->data;
-    memset( sx->H.q, 0, sizeof(sx->H.q));
-    sx->pt=0;
+    sx = ( union  sha3_struct * ) ((( ak_hash ) ctx ))->data;
+    memset( sx->q, 0, sizeof(sx->q));
     return ak_error_ok;
 }
 
 
 /* ----------------------------------------------------------------------------------------------- */
-/*! Функция "впитывания" для полного количества блоков
+/*! Функция "впитывания" для ровного количества блоков
     @param ctx указатель на контекст структуры struct hash
     @param in блок обрабатываемых данных
     @param size длина блока обрабатываемых данных в байтах; данное значение должно быть кратно
@@ -103,7 +99,7 @@ static int ak_hash_sha3_update(ak_pointer ctx, const ak_pointer in, const size_t
 {
 
     ak_uint64 quot = 0;
-    struct sha3_struct *sx = NULL;
+    union  sha3_struct *sx = NULL;
     ak_uint32 bsize;
 
     if( ctx == NULL ) return  ak_error_message( ak_error_null_pointer,
@@ -114,24 +110,22 @@ static int ak_hash_sha3_update(ak_pointer ctx, const ak_pointer in, const size_t
     if( size - quot*(( ak_hash ) ctx )->bsize ) /* длина данных должна быть кратна ctx->bsize */
         return ak_error_message( ak_error_wrong_length, __func__ , "using data with wrong length" );
 
-    sx = ( struct sha3_struct * ) (( ak_hash ) ctx )->data;
+    sx = ( union  sha3_struct * ) (( ak_hash ) ctx )->data;
     bsize =(ak_uint32 )((ak_hash)ctx)->bsize;
     size_t i,k;
     ak_int32 j=0;
     for (i=0; i<quot;i++)
     {
         for (k=0; k<bsize;k++)
-            sx->H.b[k] ^= ((const uint8_t *)in)[j++];
-        keccak_permut(sx->H.q);
+            sx->b[k] ^= ((const ak_uint8 *) in)[j++];
+        keccak_permut(sx->q);
     }
-
-    sx->pt=(ak_int32)(size-bsize*quot); /*считаем количество бит, которые остались не обработаны */
 
     return ak_error_ok;
 }
 
 /* ----------------------------------------------------------------------------------------------- */
-/*! Функция выполняет завершающее преобразование алгоритма SHA3 для последнего блока и "отжатие"
+/*! Функция выполняет завершающее преобразование алгоритма SHA3 и "отжатие"
     @param ctx указатель на контекст структуры struct hash
     @param in блок входных данных; длина блока должна быть менее, чем блина блока
            обрабатываемых данных
@@ -147,10 +141,10 @@ static ak_buffer ak_hash_sha3_finalize(ak_pointer ctx, const ak_pointer in, cons
 
     ak_pointer pout = NULL;
     ak_buffer result = NULL;
-    ak_int32 bsize,t=1;
+    ak_int32 bsize;
     size_t p;
     int i;
-    struct sha3_struct *sx;
+    union  sha3_struct *sx;
 
     if( ctx == NULL )
     {
@@ -158,7 +152,7 @@ static ak_buffer ak_hash_sha3_finalize(ak_pointer ctx, const ak_pointer in, cons
         return NULL;
     }
 
-    sx = ( struct sha3_struct * ) (( ak_hash ) ctx )->data;
+    sx = ( union  sha3_struct * ) (( ak_hash ) ctx )->data;
     bsize =(ak_uint32 )((ak_hash)ctx)->bsize;
 
     if( size >= bsize )
@@ -168,32 +162,22 @@ static ak_buffer ak_hash_sha3_finalize(ak_pointer ctx, const ak_pointer in, cons
         return NULL;
     }
 
-    if (sx->pt==0)
-    {
-        p = 0;
-        t=sx->pt;
-        sx->pt=(ak_int32) size;
-    }
-    else
-        p=(size-(sx->pt));
+    p = 0;
 
-
-    for(i=0;i<sx->pt;i++)
+    for(i=0;i<size;i++)
     {
-        sx->H.b[i] ^= ((const uint8_t *)in)[p];
+        sx->b[i] ^= ((const ak_uint8 *)in)[p];
         p++;
     }
 
-    if (t!=0)
-      p=size-(sx->pt);
 
     /*pad 10*1*/
     if ((((ak_hash)ctx)->oid==ak_oid_find_by_name("shake128"))||(((ak_hash)ctx)->oid==ak_oid_find_by_name("shake256")))
-        sx->H.b[p] ^= 0x1F;
+        sx->b[p] ^= 0x1F;
     else
-        sx->H.b[p] ^= 0x06;
-    sx->H.b[bsize - 1] ^= 0x80;
-    keccak_permut(sx->H.q);
+        sx->b[p] ^= 0x06;
+    sx->b[bsize - 1] ^= 0x80;
+    keccak_permut(sx->q);
 
     /* определяем указатель на область памяти, в которую будет помещен результат вычислений */
     if( out != NULL )
@@ -209,7 +193,7 @@ static ak_buffer ak_hash_sha3_finalize(ak_pointer ctx, const ak_pointer in, cons
     /* копируем нужную часть результирующего массива или выдаем сообщение об ошибке */
     if( pout != NULL )
     {
-        memcpy( pout, sx->H.b, ((ak_hash)ctx)->hsize );
+        memcpy( pout, sx->b, ((ak_hash)ctx)->hsize );
     }
     else ak_error_message( ak_error_out_of_memory, __func__ ,
                              "incorrect memory allocation for result buffer" );
@@ -232,7 +216,7 @@ int ak_hash_create_sha3_224(ak_hash ctx)
     if( ctx == NULL ) return ak_error_message( ak_error_null_pointer, __func__,
                                                "using null pointer to hash context" );
     /* инициализируем контекст */
-    if(( error = ak_hash_create( ctx, sizeof( struct sha3_struct ), 144 )) != ak_error_ok )
+    if(( error = ak_hash_create( ctx, sizeof( union  sha3_struct ), 144 )) != ak_error_ok )
         return ak_error_message( error, __func__ , "incorrect sha3 context creation" );
 
     /* устанавливаем размер хешхода и OID алгоритма хеширования */
@@ -267,7 +251,7 @@ int ak_hash_create_sha3_256(ak_hash ctx)
     if( ctx == NULL ) return ak_error_message( ak_error_null_pointer, __func__,
                                                "using null pointer to hash context" );
     /* инициализируем контекст */
-    if(( error = ak_hash_create( ctx, sizeof( struct sha3_struct ), 136 )) != ak_error_ok )
+    if(( error = ak_hash_create( ctx, sizeof( union  sha3_struct ), 136 )) != ak_error_ok )
         return ak_error_message( error, __func__ , "incorrect sha3 context creation" );
 
     /* устанавливаем размер хешхода и OID алгоритма хеширования */
@@ -300,7 +284,7 @@ int ak_hash_create_sha3_384(ak_hash ctx)
     if( ctx == NULL ) return ak_error_message( ak_error_null_pointer, __func__,
                                                "using null pointer to hash context" );
     /* инициализируем контекст */
-    if(( error = ak_hash_create( ctx, sizeof( struct sha3_struct ), 104 )) != ak_error_ok )
+    if(( error = ak_hash_create( ctx, sizeof( union  sha3_struct ), 104 )) != ak_error_ok )
         return ak_error_message( error, __func__ , "incorrect sha3 context creation" );
 
     /* устанавливаем размер хешхода и OID алгоритма хеширования */
@@ -333,7 +317,7 @@ int ak_hash_create_sha3_512(ak_hash ctx)
     if( ctx == NULL ) return ak_error_message( ak_error_null_pointer, __func__,
                                                "using null pointer to hash context" );
     /* инициализируем контекст */
-    if(( error = ak_hash_create( ctx, sizeof( struct sha3_struct ), 72 )) != ak_error_ok )
+    if(( error = ak_hash_create( ctx, sizeof( union  sha3_struct ), 72 )) != ak_error_ok )
         return ak_error_message( error, __func__ , "incorrect sha3 context creation" );
 
     /* устанавливаем размер хешхода и OID алгоритма хеширования */
@@ -366,7 +350,7 @@ int ak_hash_create_shake128(ak_hash ctx)
     if( ctx == NULL ) return ak_error_message( ak_error_null_pointer, __func__,
                                                "using null pointer to hash context" );
     /* инициализируем контекст */
-    if(( error = ak_hash_create( ctx, sizeof( struct sha3_struct ), 168 )) != ak_error_ok )
+    if(( error = ak_hash_create( ctx, sizeof( union  sha3_struct ), 168 )) != ak_error_ok )
         return ak_error_message( error, __func__ , "incorrect sha3 context creation" );
 
     /* устанавливаем размер хешхода и OID алгоритма хеширования */
@@ -399,7 +383,7 @@ int ak_hash_create_shake256(ak_hash ctx)
     if( ctx == NULL ) return ak_error_message( ak_error_null_pointer, __func__,
                                                "using null pointer to hash context" );
     /* инициализируем контекст */
-    if(( error = ak_hash_create( ctx, sizeof( struct sha3_struct ), 136 )) != ak_error_ok )
+    if(( error = ak_hash_create( ctx, sizeof( union  sha3_struct ), 136 )) != ak_error_ok )
         return ak_error_message( error, __func__ , "incorrect sha3 context creation" );
 
     /* устанавливаем размер хешхода и OID алгоритма хеширования */
@@ -420,6 +404,7 @@ int ak_hash_create_shake256(ak_hash ctx)
 
 
 static ak_uint8 sha3_testM2[4]= "abc";
+
 /*! результат хеширования пустого собщения алгоритмом SHA3 в длиной хеш-кода 224 бит */
 static ak_uint8 sha3_224_test[28]=
         {
@@ -496,7 +481,6 @@ ak_bool ak_hash_test_sha3_224( void )
 {
     struct hash ctx; /* контекст функции хеширования */
     ak_uint8 out[28]; /* буффер длиной 28 байта (224 бит) для получения результата */
-    //memset(out,0,28);
     char *str = NULL;
     int error = ak_error_ok;
     ak_bool result = ak_true;
@@ -562,27 +546,21 @@ ak_bool ak_hash_test_sha3_224( void )
 ak_bool ak_hash_test_sha3_256( void )
 {
 
-    ak_hash ctx = NULL;
-    if ( ( ctx = malloc(sizeof(struct hash)) ) == NULL ) {
-        ak_error_message( ak_error_out_of_memory, __func__ , "wrong creation of hash function context" );
-        return ak_error_wrong_handle;
-    }
-    /* контекст функции хеширования */
+    struct hash ctx;/* контекст функции хеширования */
     ak_uint8 out[32]; /* буффер длиной 32 байта (256 бит) для получения результата */
-    memset(out,0,32);
     char *str = NULL;
     int error = ak_error_ok;
     ak_bool result = ak_true;
     int audit = ak_log_get_level();
     /* инициализируем контекст функции хешиирования */
-    if(( error = ak_hash_create_sha3_256( ctx )) != ak_error_ok )
+    if(( error = ak_hash_create_sha3_256( &ctx )) != ak_error_ok )
     {
         ak_error_message( error, __func__ , "wrong initialization of sha3_256 context" );
         return ak_false;
     }
 
     /* хеширование пустого вектора */
-    ak_hash_context_ptr( ctx, "", 0, out );
+    ak_hash_context_ptr( &ctx, "", 0, out );
     if(( error = ak_error_get_value()) != ak_error_ok ) {
         ak_error_message( error, __func__ , "invalid calculation of sha3_256 code" );
         result = ak_false;
@@ -603,7 +581,7 @@ ak_bool ak_hash_test_sha3_256( void )
 
 
     /* хеширование "abc" */
-    ak_hash_context_ptr( ctx, sha3_testM2, 3, out );
+    ak_hash_context_ptr( &ctx, sha3_testM2, 3, out );
     if(( error = ak_error_get_value()) != ak_error_ok ) {
         ak_error_message( error, __func__ , "invalid calculation of sha3_256 code" );
         result = ak_false;
@@ -622,7 +600,7 @@ ak_bool ak_hash_test_sha3_256( void )
         goto lab_exit;
     }
     /* уничтожаем контекст */
-    lab_exit: ak_hash_destroy( ctx );
+    lab_exit: ak_hash_destroy( &ctx );
     return result;
 }
 
@@ -634,7 +612,6 @@ ak_bool ak_hash_test_sha3_384( void )
 {
     struct hash ctx; /* контекст функции хеширования */
     ak_uint8 out[48]; /* буффер длиной 48 байта (384 бит) для получения результата */
-    memset(out,0,48);
     char *str = NULL;
     int error = ak_error_ok;
     ak_bool result = ak_true;
@@ -695,7 +672,6 @@ ak_bool ak_hash_test_sha3_384( void )
 {
     struct hash ctx; /* контекст функции хеширования */
     ak_uint8 out[64]; /* буффер длиной 64 байта (512 бит) для получения результата */
-    memset(out,0,64);
     char *str = NULL;
     int error = ak_error_ok;
     ak_bool result = ak_true;
@@ -759,7 +735,6 @@ ak_bool ak_hash_test_shake128( void )
 {
     struct hash ctx; /* контекст функции хеширования */
     ak_uint8 out[32]; /* буффер длиной 64 байта (512 бит) для получения результата */
-    memset(out,0,32);
     char *str = NULL;
     int error = ak_error_ok;
     ak_bool result = ak_true;
@@ -803,7 +778,6 @@ ak_bool ak_hash_test_shake256( void )
 {
     struct hash ctx; /* контекст функции хеширования */
     ak_uint8 out[64]; /* буффер длиной 64 байта (512 бит) для получения результата */
-    memset(out,0,64);
     char *str = NULL;
     int error = ak_error_ok;
     ak_bool result = ak_true;
